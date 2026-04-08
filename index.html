@@ -411,6 +411,12 @@
                 }
             }
         }
+
+        titleInput.addEventListener("keydown", (e) => {
+            if (e.key === "Enter") {
+                addNote();
+            }
+        });
     </script>
 
 </body>
