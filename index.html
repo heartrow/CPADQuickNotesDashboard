@@ -10,9 +10,9 @@
         }
 
         body {
-        font-family: system-ui, "Segoe UI", sans-serif;
-        background: #eef2ff;
-        padding: 2rem 1.5rem;
+            font-family: system-ui, "Segoe UI", sans-serif;
+            background: #eef2ff;
+            padding: 2rem 1.5rem;
         }
 
         .container {
@@ -95,6 +95,15 @@
             background: #2563eb;
         }
 
+        #clearAllBtn {
+            background:#64748b;
+            margin-top:0.8rem;
+        }
+
+        #clearAllBtn:hover {
+            background-color: #424d5c;   
+        }
+
         .counter {
             background: #e6f0ff; display: inline-block;
             padding: 0.2rem 0.8rem; border-radius: 20px;
@@ -139,6 +148,11 @@
         .delete-note:hover { background: #dc2626; }
         
         hr { margin: 1rem 0; }
+
+        footer {
+            text-align: center; margin-top: 2rem;
+            font-size: 0.7rem; color: #5b6e8c;
+        }
 
     </style>
 </head>
@@ -191,12 +205,17 @@
                 </div>
             </div>
 
-            <button id="clearAllBtn"
-            style="background:#64748b;margin-top:0.8rem;">
-            🗑 Clear all notes
+            <button id="clearAllBtn">
+                🗑 Clear all notes
             </button>
         </div>
     </div>
+
+<!-- HTML after </div> .grid -->
+    <footer>
+        💡 BOM: confirm() on delete · alert() on empty title
+            · resize event updates window size.
+    </footer>
 
     <script>
         // ── STATE ──────────────────────────────────────────────
@@ -225,55 +244,59 @@
                 notesContainer.removeChild(notesContainer.firstChild);
             }
 
-        // (rest of the function comes in the next step)
-        }
+            // ── empty-state message ──
+            if (notes.length === 0) {
+                const emptyMsg = document.createElement("div");
+                emptyMsg.textContent = "📭 No notes yet. Add your first note!";
+                emptyMsg.style.color = "#94a3b8";
+                emptyMsg.style.textAlign = "center";
+                emptyMsg.style.padding = "1rem";
+                notesContainer.appendChild(emptyMsg);
+                updateCounter();
+                return ;
+            }
 
-        // ── empty-state message ──
-        if (notes.length === 0) {
-            const emptyMsg = document.createElement("div");
-            emptyMsg.textContent = "📭 No notes yet. Add your first note!";
-            emptyMsg.style.color = "#94a3b8";
-            emptyMsg.style.textAlign = "center";
-            emptyMsg.style.padding = "1rem";
-            notesContainer.appendChild(emptyMsg);
+            notes.forEach (note => {
+                // wrapper div
+                const noteDiv = document.createElement("div");
+                noteDiv.classList.add("note-item");
+                noteDiv.setAttribute("data-id", note.id);
+                
+                // title row
+                const titleDiv = document.createElement("div");
+                titleDiv.classList.add("note-title");
+                
+                const titleSpan = document.createElement("span");
+                titleSpan.textContent = note.title;
+
+                // delete button
+                const deleteBtn = document.createElement("button");
+                deleteBtn.textContent = "🗑 Delete";
+                deleteBtn.classList.add("delete-note");
+                deleteBtn.setAttribute("data-action", "delete");
+                deleteBtn.setAttribute("data-id", note.id);
+                
+                titleDiv.appendChild(titleSpan);
+                titleDiv.appendChild(deleteBtn);
+                
+                // In renderNotes(), create the edit button:
+                const editBtn = document.createElement("button");
+                editBtn.textContent = "✏ Edit";
+                editBtn.setAttribute("data-action", "edit");
+                editBtn.setAttribute("data-id", note.id);
+                                
+                // content paragraph
+                const contentP = document.createElement("p");
+                contentP.classList.add("note-content");
+                contentP.textContent = note.content || "(no additional content)";
+                
+                noteDiv.appendChild(titleDiv);
+                noteDiv.appendChild(contentP);
+                notesContainer.appendChild(noteDiv);
+            });
+            
             updateCounter();
-            return;
         }
-
-        notes.forEach (note => {
-            // wrapper div
-            const noteDiv = document.createElement("div");
-            noteDiv.classList.add("note-item");
-            noteDiv.setAttribute("data-id", note.id);
-            
-            // title row
-            const titleDiv = document.createElement("div");
-            titleDiv.classList.add("note-title");
-            
-            const titleSpan = document.createElement("span");
-            titleSpan.textContent = note.title;
-
-            // delete button
-            const deleteBtn = document.createElement("button");
-            deleteBtn.textContent = "🗑 Delete";
-            deleteBtn.classList.add("delete-note");
-            deleteBtn.setAttribute("data-action", "delete");
-            deleteBtn.setAttribute("data-id", note.id);
-            
-            titleDiv.appendChild(titleSpan);
-            titleDiv.appendChild(deleteBtn);
-            
-            // content paragraph
-            const contentP = document.createElement("p");
-            contentP.classList.add("note-content");
-            contentP.textContent = note.content || "(no additional content)";
-            
-            noteDiv.appendChild(titleDiv);
-            noteDiv.appendChild(contentP);
-            notesContainer.appendChild(noteDiv);
-        });
-           
-        updateCounter();
 
         function addNote() {
             const title = titleInput.value.trim();
@@ -335,6 +358,21 @@
                 const id = parseInt(btn.getAttribute("data-id"), 10);
                 deleteNoteById(id);
             }
+
+            // In the event delegation listener, handle "edit":
+            const editTarget = e.target.closest('[data-action="edit"]');
+            if (editTarget) {
+            const id = parseInt(editTarget.getAttribute("data-id"), 10);
+            const found = notes.find(n => n.id === id);
+                if (found) {
+                    // BOM: prompt() returns new string or null
+                    const newTitle = prompt("New title:", found.title);
+                    if (newTitle !== null && newTitle.trim() !== "") {
+                        found.title = newTitle.trim();
+                        renderNotes();
+                    }
+                }
+            }
         });
 
         function updateWindowSize() {
@@ -379,39 +417,6 @@
 
         init(); // ← call init when the page loads
 
-        <!-- HTML after </div> .grid -->
-        <footer>
-            💡 BOM: confirm() on delete · alert() on empty title
-                · resize event updates window size.
-        </footer>
-
-        /* CSS */
-        footer {
-            text-align: center; margin-top: 2rem;
-            font-size: 0.7rem; color: #5b6e8c;
-        }
-
-        // In renderNotes(), create the edit button:
-        const editBtn = document.createElement("button");
-        editBtn.textContent = "✏ Edit";
-        editBtn.setAttribute("data-action", "edit");
-        editBtn.setAttribute("data-id", note.id);
-
-        // In the event delegation listener, handle "edit":
-        const editTarget = e.target.closest('[data-action="edit"]');
-        if (editTarget) {
-        const id = parseInt(editTarget.getAttribute("data-id"), 10);
-        const found = notes.find(n => n.id === id);
-            if (found) {
-                // BOM: prompt() returns new string or null
-                const newTitle = prompt("New title:", found.title);
-                if (newTitle !== null && newTitle.trim() !== "") {
-                    found.title = newTitle.trim();
-                    renderNotes();
-                }
-            }
-        }
-
         titleInput.addEventListener("keydown", (e) => {
             if (e.key === "Enter") {
                 addNote();
@@ -422,9 +427,9 @@
             const w = window.innerWidth;
             const h = window.innerHeight;
             let category;
-            if (w < 480) category = "📱📱 Mobile";
-            else if (w < 1024) category = "💻💻 Tablet";
-            else category = "🖥🖥 Desktop";
+            if (w < 480) category = "📱 Mobile";
+            else if (w < 1024) category = "💻 Tablet";
+            else category = "🖥 Desktop";
             windowSizeSpan.textContent = `${w} x ${h} px (${category})`;
         }
     </script>
